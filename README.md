@@ -6,7 +6,7 @@ Some features of FuzzCore include the custom memory models, the custom ISA-speci
 
 **Installation**
 
-FuzzCore was run on Ubuntu 22.04 using LLVM-14. A installation script is provided which shows the required versions and dependencies needed for both Verilator and AFL++
+FuzzCore was run on Ubuntu 22.04 using LLVM-14. An installation script is provided which shows the required versions and dependencies needed for both Verilator and AFL++
 
 **Using FuzzCore**
 
