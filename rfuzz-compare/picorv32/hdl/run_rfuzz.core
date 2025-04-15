@@ -1,0 +1,53 @@
+CAPI=2:
+# Copyright 2022 Flavien Solt, ETH Zurich.
+# Licensed under the General Public License, Version 3.0, see LICENSE for details.
+# SPDX-License-Identifier: GPL-3.0-only
+name: "::run_rfuzz:0.1"
+description: "Run on vanilla but with active rfuzz support"
+
+filesets:
+  files_cells:
+    files:
+      - picorv32.sv
+    file_type: systemVerilogSource
+
+  files_dv:
+    files:
+      - testbench/ticks.h : {is_include_file: true}
+      - testbench/macros.h : {is_include_file: true}
+      - testbench/afl.h : {is_include_file: true}
+      - testbench/corpus.cc
+      - testbench/corpus.h : {is_include_file: true}
+      - testbench/dtypes.h : {is_include_file: true}
+      - testbench/dtypes.cc
+      - testbench/mutator.cc
+      - testbench/mutator.h : {is_include_file: true}
+      - testbench/queue.cc
+      - testbench/queue.h : {is_include_file: true}
+      - testbench/testbench.h : {is_include_file: true}
+      - testbench/testbench.cc
+      - testbench/toplevel.cc
+    file_type: cppSource
+
+targets:
+  default:
+    default_tool: verilator
+    filesets:
+      - files_cells
+      - files_dv
+    toplevel: picorv32
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+          - '-CFLAGS "-std=c++11 -Wall -DIS_VANILLA -DSYNTHESIS -DTOPLEVEL_NAME=picorv32 -g -I$(RISCV)/include -O0"'
+          - '-DSTOP_COND=0'
+          - '-LDFLAGS "-pthread -lutil"'
+          - "-Wall"
+          - "-Wno-PINCONNECTEMPTY"
+          - "-Wno-fatal"
+          - "-Wno-BLKANDNBLK"
+          - "-Wno-REDEFMACRO"
+          - "-Wno-PINMISSING"
+          - "-Wno-DECLFILENAME"
+          - "-Wno-VARHIDDEN"

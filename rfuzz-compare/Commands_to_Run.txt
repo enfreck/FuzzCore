@@ -1,0 +1,6 @@
+
+//Remove contents of the inputs folder
+
+./aquila_rfuzz
+
+//To get coverage run inspector gadget with the rfuzz inputs and aquila_cov files

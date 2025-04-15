@@ -1,0 +1,5 @@
+export AFL_DISABLE_TRIM=true
+
+timeout 24h ~/AFLplusplus/afl-fuzz -t 1000000 -g 65 -G 65 -i ~/FuzzCore/fhls-compare/picorv32/seed/ -o ./outputs/24h_picorv32_fhls -- ~/FuzzCore/fhls-compare/picorv32/picorv32_fhls @@
+
+//G is from the size of the file from wc -c for bytes

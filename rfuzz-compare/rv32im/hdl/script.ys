@@ -1,0 +1,14 @@
+read_verilog -defer -DSTOP_COND=0 ./core/*
+hierarchy -top riscv_core -check
+
+# Then continue with your original commands
+proc
+pmuxtree
+opt -purge
+
+mux_probes "" ""
+port_mux_probes ""
+port_fuzz_inputs "" clk_i,rst_i
+meta_reset ""
+opt_clean
+write_verilog -simple-lhs -sv rv32im.sv

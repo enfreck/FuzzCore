@@ -1,0 +1,35 @@
+VERILATOR_ROOT=/home/user/Research/Files/verilator-5.016
+AFL_PATH=/home/user/Research/Files/AFLplusplus
+COV_PATH=/home/user/Research/Fuzz/inspector-gadget
+CXX=clang++
+CXX_FLAGS=-I.  -MMD -I$(VERILATOR_ROOT)/include -I$(VERILATOR_ROOT)/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable -Wno-shadow
+CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping"
+DENYLIST=/home/user/Research/Fuzz/FuzzCore/rfuzz-compare/sodor3/lists/denylist.txt
+ALLOWLIST=/home/user/Research/Fuzz/FuzzCore/rfuzz-compare/sodor3/lists/allowlist.txt
+
+TOP_MODULE=Core
+VERILATOR_COMMAND= -O0 --cc --top-module $(TOP_MODULE) ./hdl/sodor3.sv -Wall -Wno-PINCONNECTEMPTY -Wno-fatal -Wno-BLKANDNBLK -Wno-REDEFMACRO -Wno-PINMISSING -Wno-DECLFILENAME -Wno-VARHIDDEN
+VERILATOR_FLAGS= -I$(VERILATOR_ROOT)/include -I$(VERILATOR_ROOT)/include/vltstd -std=c++11 -Wall -DIS_VANILLA -DSYNTHESIS -DTOPLEVEL_NAME=$(TOP_MODULE) -g -I$(RISCV)/include -O0 -DSTOP_COND=0
+LDFLAGS= -pthread -lutil -latomic -DVM_TRACE=0
+
+#Compile for Rfuzz testing
+
+sodor3_rfuzz:
+	$(VERILATOR_ROOT)/bin/verilator $(VERILATOR_COMMAND)
+	make CXX=$(CXX) VM_PARALLEL_BUILDS=1 -C obj_dir -f V$(TOP_MODULE).mk
+	cd obj_dir && $(CXX) $(VERILATOR_FLAGS) -c -gdwarf-2 -g -o verilated.o $(VERILATOR_ROOT)/include/verilated.cpp
+	$(CXX) $(LDFLAGS) -I$(VERILATOR_ROOT)/include -I$(VERILATOR_ROOT)/include/vltstd -I./obj_dir ./obj_dir/V$(TOP_MODULE).cpp ./obj_dir/V$(TOP_MODULE)__ALL.a ./obj_dir/verilated.o $(VERILATOR_ROOT)/include/verilated_threads.cpp ./testbench/*.cc -o sodor3_rfuzz
+
+#Compile for Rfuzz edge calculations
+
+sodor3_rfuzz_cov:
+	$(VERILATOR_ROOT)/bin/verilator -O0 --cc -DSIZE_OF_THE_BUS=32 ./hdl/sodor_top.v ./hdl/sodor_core_3stage.v 
+	make CXX=$(COV_PATH)/cov-clang++ -C obj_dir -f Vsodor_top.mk
+	cd obj_dir && $(CXX) $(CXX_FLAGS) -c -o verilated.o $(VERILATOR_ROOT)/include/verilated.cpp
+	$(COV_PATH)/cov-clang++ -latomic -I$(VERILATOR_ROOT)/include -pthread -I$(VERILATOR_ROOT)/include/vltstd -I./obj_dir ./testbench_coverage/toplevel.cc ./obj_dir/Vsodor_top__ALL.a ./obj_dir/verilated.o $(VERILATOR_ROOT)/include/verilated_threads.cpp -o sodor3_cov
+	nm sodor3_cov | rev | cut -d' ' -f1 | rev | sed 's/^/fun:/' | grep -vFf $(ALLOWLIST) > $(DENYLIST)
+	rm -rf obj_dir sodor3_cov
+	$(VERILATOR_ROOT)/bin/verilator -O0 --cc -DSIZE_OF_THE_BUS=32 ./hdl/sodor_top.v ./hdl/sodor_core_3stage.v 
+	export AFL_LLVM_DENYLIST=$(DENYLIST) && make CXX=$(COV_PATH)/cov-clang++ -C obj_dir -f Vsodor_top.mk
+	cd obj_dir && $(CXX) $(CXX_FLAGS) -c -o verilated.o $(VERILATOR_ROOT)/include/verilated.cpp
+	export AFL_LLVM_DENYLIST=$(DENYLIST) && $(COV_PATH)/cov-clang++ -latomic -I$(VERILATOR_ROOT)/include -pthread -I$(VERILATOR_ROOT)/include/vltstd -I./obj_dir ./testbench_coverage/toplevel.cc ./obj_dir/Vsodor_top__ALL.a ./obj_dir/verilated.o $(VERILATOR_ROOT)/include/verilated_threads.cpp -o sodor3_cov

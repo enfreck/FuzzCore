@@ -1,0 +1,15 @@
+read_verilog -defer -DSTOP_COND=0 picorv32_core.v
+hierarchy -top picorv32 -check
+proc
+pmuxtree
+opt -purge
+
+mark_resets "" "" resetn
+mux_probes "" ""
+port_mux_probes ""
+
+port_fuzz_inputs "" clk,resetn
+meta_reset ""
+opt_clean
+
+write_verilog -simple-lhs -sv picorv32.sv
