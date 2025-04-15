@@ -49,7 +49,7 @@ To Find the Number of Edges:
 In ~/cores/core
 ```
 COVERAGE_DUMP_FILE=a ./core_cov ../../inputs/input_nop_20
-
+```
 To check memory dumps:
 
 Uncomment the code at the bottom of the core_clk_rst.cc files in the core-specific folders. Upon re-running AFL++, the core outputs will be stored in a tmp folder after which inspection can be done.
